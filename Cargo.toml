@@ -1,0 +1,18 @@
+[package]
+name = "esparia"
+version = "0.1.0"
+authors = ["Joshua Miller <jsmiller@uchicago.edu>"]
+
+
+[dependencies]
+piston = "0.17.0"
+piston2d-graphics = "0.13.0"
+pistoncore-glutin_window = "0.20.0"
+piston2d-opengl_graphics = "0.23.0"
+
+
+[build-dependencies]
+piston3d-cam = { git = "https://github.com/PistonDevelopers/cam" }
+
+[dependencies.vecmath]
+git = "https://github.com/PistonDevelopers/vecmath"
