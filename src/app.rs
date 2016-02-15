@@ -1,5 +1,9 @@
 
+
 use engine::{
+    Mesh,
+    Face,
+    WorldObject,
     World,
 };
 
@@ -12,7 +16,23 @@ pub struct Game {
 impl Game {
 
     pub fn new() -> Game {
-        Game { world: World::new() }
+
+        // let terrain = Mesh::new_terrain()
+        //     .translate([0.0, 0.0, 0.0]);
+
+        let mesh1 = Mesh::new()
+            .face(Face::new([100.0, 0.0, 0.0],
+                            [  0.0, 0.0, 0.0],
+                            [  0.0, 100.0, 0.0])
+                  .color([1.0, 1.0, 1.0, 0.4]))
+            .position([0.0, 0.0, 0.0])
+            .wireframe(false);
+
+        let world = World::new()
+            .object(WorldObject::new().mesh(mesh1));
+
+        Game { world: world }
+
     }
 
     pub fn run(self) {
