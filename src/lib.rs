@@ -1,5 +1,8 @@
 #![crate_name = "esparia"]
 
+#[macro_use]
+extern crate log;
+
 extern crate float;
 extern crate vecmath;
 extern crate piston;
