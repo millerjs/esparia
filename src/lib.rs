@@ -1,3 +1,5 @@
+
+
 #![crate_name = "esparia"]
 
 #[macro_use]
@@ -14,3 +16,6 @@ extern crate cam;
 pub mod app;
 
 mod engine;
+mod types;
+mod camera;
+mod math;
