@@ -98,7 +98,6 @@ impl Face {
 
 }
 
-
 // ======================================================================
 // Mesh
 
@@ -162,6 +161,7 @@ impl Mesh {
                 [p[2][0], p[2][1], p[0][0], p[0][1]],
             ];
             for line in &lines {
+                println!("{:.1}, {:.1}, {:.1} {:.1}", line[0], line[1], line[2], line[3]);
                 Line::new(face.color, 0.5).draw(*line, ds, transform, g);
             }
         }
@@ -287,10 +287,14 @@ impl World {
         use graphics::Transformed;
 
         let objects = &self.objects;
-        let camera = &self.camera;
+        let camera = &mut self.camera;
+
+        camera.width = args.width as f64;
+        camera.height = args.height as f64;
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
+
 
             for object in objects {
                 object.draw(camera, [[0.0; 3]; 2], gl);

@@ -51,7 +51,6 @@ impl Camera {
         let scale = d[2] * self.screen;
         let bx = d[0] * self.width / scale;
         let by = d[1] * self.height / scale;
-        println!("{:?}", [self.width/2.0 + bx, self.height/2.0 - by]);
         [self.width/2.0 + bx, self.height/2.0 - by]
     }
 
