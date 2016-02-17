@@ -27,6 +27,7 @@ use vecmath;
 /// Rotation matrix X
 #[inline(always)]
 pub fn mat_rot_x(theta: f64) -> Mat3 {
+    let theta = - theta;
     [
         [ 1.0,     0.0,          0.0    ],
         [ 0.0, theta.cos(), -theta.sin()],
@@ -37,9 +38,10 @@ pub fn mat_rot_x(theta: f64) -> Mat3 {
 /// Rotation matrix Y
 #[inline(always)]
 pub fn mat_rot_y(theta: f64) -> Mat3 {
+    let theta = - theta;
     [
         [theta.cos(),  0.0, theta.sin()],
-        [    0.0,      1.0,     0.     ],
+        [    0.0,      1.0,     0.0    ],
         [-theta.sin(), 0.0, theta.cos()],
     ]
 }
@@ -47,9 +49,10 @@ pub fn mat_rot_y(theta: f64) -> Mat3 {
 /// Rotation matrix Z
 #[inline(always)]
 pub fn mat_rot_z(theta: f64) -> Mat3 {
+    let theta = - theta;
     [
-        [theta.cos(), -theta.sin(), 0.0,],
-        [theta.sin(),  theta.cos(), 0.0,],
+        [theta.cos(), -theta.sin(), 0.0],
+        [theta.sin(),  theta.cos(), 0.0],
         [0.0,             0.0,      1.0],
     ]
 }
@@ -59,7 +62,7 @@ pub fn mat_rotation(rotation: Vec3) -> Mat3 {
     let a = mat_rot_x(rotation[0]);
     let b = mat_rot_y(rotation[1]);
     let c = mat_rot_z(rotation[2]);
-    row_mat3_mul(row_mat3_mul(a, b), c)
+    row_mat3_mul(a, row_mat3_mul(b, c))
 }
 
 #[inline(always)]

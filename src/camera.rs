@@ -6,10 +6,10 @@ use types::{
 pub struct Camera {
     pub width: f64,
     pub height: f64,
-    r: Vec3,
-    theta: Vec3,
-    projection: Mat3,
-    screen: f64,
+    pub r: Vec3,
+    pub theta: Vec3,
+    pub projection: Mat3,
+    pub screen: f64,
 }
 
 use math::{
@@ -31,9 +31,9 @@ impl Camera {
         let mut camera = Camera {
             width: 200.0,
             height: 200.0,
-            r: [0.0, 500.0, 1000.0],
+            r: [0.0, -500.0, -500.0],
             theta: [0.0, 0.0, 0.0],
-            screen: 3.0,
+            screen: 300.0,
             projection: [[0.0; 3]; 3]
         };
         camera.update_projection();
@@ -48,10 +48,11 @@ impl Camera {
     #[inline(always)]
     pub fn projected(&self, r: Vec3) -> [f64; 2] {
         let d =  mat3xv3_mul(self.projection, vec3_sub(r, self.r));
-        let scale = d[2] * self.screen;
-        let bx = d[0] * self.width / scale;
-        let by = d[1] * self.height / scale;
-        [self.width/2.0 + bx, self.height/2.0 - by]
+        let scale = self.screen / d[2];
+        let bx = scale * d[0] + self.width  / 2.0;
+        let by = scale * d[1] + self.height / 2.0;
+        // println!("{:?}, {:?}", d, [bx, by]);
+        [bx, by]
     }
 
     pub fn look_at(&mut self, r: Vec3) {
