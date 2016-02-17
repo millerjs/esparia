@@ -121,6 +121,16 @@ impl World {
         self.camera.update_projection();
     }
 
+    fn turn_camera(&mut self, position: &[f64; 2]) {
+        let s = 0.785398;
+        let (w, h) = (self.camera.width, self.camera.height);
+        self.camera.theta[0] = (position[0]-w/2.0) / w * s;
+        self.camera.theta[1] = (position[1]-h/2.0) / h * s;
+        // println!("{:?}", self.camera.theta);
+
+        self.camera.update_projection();
+    }
+
     pub fn run(mut self) {
         println!("Running world...");
 
