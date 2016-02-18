@@ -73,8 +73,15 @@ pub fn mat3xv3_mul<T>(
     where T: Copy + Add<T, Output = T> + Mul<T, Output = T>
 {
     [
-        a[0][0]*b[0] + a[0][1]*b[0] + a[0][2]*b[0],
-        a[1][0]*b[1] + a[1][1]*b[1] + a[1][2]*b[1],
-        a[2][0]*b[2] + a[2][1]*b[2] + a[2][2]*b[2],
+        a[0][0]*b[0] + a[0][1]*b[1] + a[0][2]*b[2],
+        a[1][0]*b[0] + a[1][1]*b[1] + a[1][2]*b[2],
+        a[2][0]*b[0] + a[2][1]*b[2] + a[2][2]*b[2],
     ]
+}
+
+#[inline(always)]
+pub fn vec3_rotate_around(r: Vec3, rotation: Mat3, around: Vec3) -> Vec3 {
+    let translated = vecmath::vec3_sub(r, around);
+    let rotated = mat3xv3_mul(rotation, translated);
+    vecmath::vec3_add(rotated, around)
 }

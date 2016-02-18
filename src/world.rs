@@ -104,6 +104,7 @@ impl World {
 
         camera.width = args.width as f64;
         camera.height = args.height as f64;
+
         camera.update_projection();
 
         self.gl.draw(args.viewport(), |c, gl| {
@@ -118,17 +119,23 @@ impl World {
 
     fn update(&mut self, args: &UpdateArgs) {
         self.t += args.dt;
-        self.camera.update_projection();
     }
 
-    fn turn_camera(&mut self, position: &[f64; 2]) {
-        let s = 0.785398;
-        let (w, h) = (self.camera.width, self.camera.height);
-        self.camera.theta[0] = (position[0]-w/2.0) / w * s;
-        self.camera.theta[1] = (position[1]-h/2.0) / h * s;
-        // println!("{:?}", self.camera.theta);
+    fn move_diamond(&mut self, key: &String) {
+        // let s = 6.26573;
+        // println!("{:?}", args);
+        // let (w, h) = (self.camera.width, self.camera.height);
 
-        self.camera.update_projection();
+        let d = 10.0;
+        let r = match key.as_str() {
+            "a" => [ -d, 0.0, 0.0],
+            "d" => [  d, 0.0, 0.0],
+            "s" => [0.0, 0.0,  -d],
+            "w" => [0.0, 0.0,   d],
+            _ => [0.0; 3]
+        };
+        self.objects[1].meshes[0].translate(r);
+
     }
 
     pub fn run(mut self) {
@@ -141,12 +148,16 @@ impl World {
                 self.render(&r);
             }
 
-            if let Some(u) = e.update_args() {
+            else if let Some(u) = e.update_args() {
                 self.update(&u);
             }
 
-            if let Some(c) = e.mouse_cursor_args() {
+            // if let Some(c) = e.mouse_cursor_args() {
+            //     self.turn_camera(&c);
+            // }
 
+            else if let Some(c) = e.text_args() {
+                self.move_diamond(&c);
             }
 
             // else {

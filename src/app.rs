@@ -7,9 +7,11 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Game {
-        let terrain_mesh = Mesh::new_domain().wireframe(false);
-        let terrain = WorldObject::new().mesh(terrain_mesh);
-        let world = World::new().object(terrain);
+        let terrain = Mesh::new_domain().wireframe(true);
+        let diamond = Mesh::new_diamond(15.0);
+        let world = World::new()
+            .object(WorldObject::new().mesh(terrain))
+            .object(WorldObject::new().mesh(diamond));
 
         Game { world: world }
     }

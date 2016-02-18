@@ -31,8 +31,8 @@ impl Camera {
         let mut camera = Camera {
             width: 200.0,
             height: 200.0,
-            r: [0.0, -500.0, -500.0],
-            theta: [0.0, 0.0, 0.0],
+            r: [0.0, -200.0, -250.0],
+            theta: [-0.4, 0.0, 0.0],
             screen: 300.0,
             projection: [[0.0; 3]; 3]
         };
@@ -47,18 +47,18 @@ impl Camera {
     /// Get the x, y location as projected on the screen
     #[inline(always)]
     pub fn projected(&self, r: Vec3) -> [f64; 2] {
-        let d =  mat3xv3_mul(self.projection, vec3_sub(r, self.r));
-        let scale = self.screen / d[2];
-        let bx = scale * d[0] + self.width  / 2.0;
-        let by = scale * d[1] + self.height / 2.0;
-        // println!("{:?}, {:?}", d, [bx, by]);
+        let dr = vec3_sub(r, self.r);
+        let d =  mat3xv3_mul(self.projection, dr);
+        let scale = self.screen / d[2] / 1500.0;
+        let bx = scale * d[0] * self.width + self.width  / 2.0;
+        let by = scale * d[1] * self.height + self.height / 2.0;
         [bx, by]
     }
 
     pub fn look_at(&mut self, r: Vec3) {
         let dr = vec3_sub(r, self.r);
         let d = vec3_square_len(dr);
-        let dr = vec3_scale(dr, 1.0/d);
+        let dr = vec3_scale(dr, 1.0/d/2.0);
         self.theta[0] = (dr[1]/d).acos();
         self.theta[1] = (dr[0]/d).acos();
     }

@@ -5,6 +5,13 @@ pub use float::{
 
 use vecmath::{
     vec3_add,
+    vec3_sub,
+};
+
+use math::{
+    mat_rotation,
+    mat3xv3_mul,
+    vec3_rotate_around,
 };
 
 use types::{
@@ -66,17 +73,22 @@ impl Face {
         ]
     }
 
-    pub fn translate(&self, r: Vec3) -> Face {
-        Face {
-            color: self.color,
-            points: [
-                vec3_add(self.points[0], r),
-                vec3_add(self.points[1], r),
-                vec3_add(self.points[2], r),
-            ],
-        }
+    pub fn translate(&mut self, r: Vec3) {
+        self.points = [
+            vec3_add(self.points[0], r),
+            vec3_add(self.points[1], r),
+            vec3_add(self.points[2], r),
+        ]
     }
 
+    pub fn rotate(&mut self, theta: Vec3, r: Vec3) {
+        let rot = mat_rotation(theta);
+        self.points = [
+            vec3_rotate_around(self.points[0], rot, r),
+            vec3_rotate_around(self.points[1], rot, r),
+            vec3_rotate_around(self.points[2], rot, r),
+        ]
+    }
 }
 
 // ======================================================================
@@ -84,17 +96,32 @@ impl Face {
 
 #[derive(Debug)]
 pub struct Mesh {
+    r: Vec3,
     faces: Vec<Face>,
     wireframe: bool,
-    r: Vec3,
+    theta: Vec3,
 }
 
 impl Mesh {
     pub fn new() -> Mesh {
         Mesh {
             r: [0.0; 3],
+            theta: [0.0; 3],
             faces: vec![],
-            wireframe: false
+            wireframe: false,
+        }
+    }
+
+    pub fn translate(&mut self, r: Vec3) {
+        self.r = vec3_add(self.r, r);
+        for face in self.faces.iter_mut() {
+            face.translate(r);
+        }
+    }
+
+    pub fn rotate(&mut self, theta: Vec3) {
+        for face in self.faces.iter_mut() {
+            face.rotate(theta, self.r);
         }
     }
 
@@ -117,13 +144,13 @@ impl Mesh {
         }
     }
 
+
     pub fn draw_filled<G>(&self, camera: &Camera, transform: Matrix2d, g: &mut G)
         where G: Graphics
     {
         for face in self.faces.iter() {
-            let translated = face.translate(self.r);
-            Polygon::new(translated.color)
-                .draw(&translated.project(camera),
+            Polygon::new(face.color)
+                .draw(&face.project(camera),
                       default_draw_state(),
                       transform,
                       g);
@@ -136,7 +163,6 @@ impl Mesh {
         let ds = default_draw_state();
         for face in self.faces.iter() {
             for line in &face.project_lines(camera) {
-                // println!("{:.1}, {:.1}, {:.1} {:.1}", line[0], line[1], line[2], line[3]);
                 Line::new(face.color, 0.5).draw(*line, ds, transform, g);
             }
         }
@@ -145,10 +171,6 @@ impl Mesh {
     pub fn position(mut self, r: Vec3) -> Mesh {
         self.r = r;
         self
-    }
-
-    pub fn translate(&mut self, r: Vec3) {
-        self.r = vec3_add(self.r, r);
     }
 
     ///  z         a --- b
@@ -164,29 +186,51 @@ impl Mesh {
         Mesh::new().face(Face::new(a, c, d)).face(Face::new(a, b, d))
     }
 
-    ///  z         a --- b
+    ///  y         a --- b
     ///  ^         | \   |
     ///  |         |   \ |
     ///  +-> x     c --- d
     pub fn new_domain() -> Mesh {
-        let size = 600.0;
-        let a =  [-size,  size/2.0, 0.0];
-        let b =  [ size,  size/2.0, 0.0];
-        let c =  [-size, -size/2.0, 0.0];
-        let d =  [ size, -size/2.0, 0.0];
-        let aa = [-size,  size/2.0, size];
-        let bb = [ size,  size/2.0, size];
-        let cc = [-size, -size/2.0, size];
-        let dd = [ size, -size/2.0, size];
+        let size = 800.0;
+        let a =  [-size, -size, 0.0];
+        let b =  [ size, -size, 0.0];
+        let c =  [-size, 0.0, 0.0];
+        let d =  [ size, 0.0, 0.0];
+        let aa = [-size, -size, size];
+        let bb = [ size, -size, size];
+        let cc = [-size, 0.0, size];
+        let dd = [ size, 0.0, size];
         Mesh::new()
-            .face(Face::new(a, b, d).color([0.5, 0.5, 1.0, 0.5]))
-            .face(Face::new(a, c, d).color([0.5, 0.5, 1.0, 0.5]))
             .face(Face::new(aa, bb, dd))
             .face(Face::new(aa, cc, dd))
             .face(Face::new(a, aa, c))
-            .face(Face::new(a, c, cc))
+            .face(Face::new(aa, cc, c))
             .face(Face::new(b, bb, d))
-            .face(Face::new(b, d, dd))
+            .face(Face::new(bb, dd, d))
+            .wireframe(true)
+    }
+
+
+    ///  y            a
+    ///  ^         b ef d
+    ///  |           c
+    ///  +-> x
+    pub fn new_diamond(size: f64) -> Mesh {
+        let a =  [0.0,  size*2.0, 0.0];
+        let b =  [-size, 0.0, 0.0];
+        let c =  [0.0,  -size*2.0, 0.0];
+        let d =  [size,  0.0, 0.0];
+        let e =  [0.0,  0.0, size];
+        let f =  [0.0,  0.0, -size];
+        Mesh::new()
+            .face(Face::new(a, b, e))
+            .face(Face::new(a, b, f))
+            .face(Face::new(a, d, e))
+            .face(Face::new(a, d, f))
+            .face(Face::new(c, b, e))
+            .face(Face::new(c, b, f))
+            .face(Face::new(c, d, e))
+            .face(Face::new(c, d, f))
             .wireframe(true)
     }
 
