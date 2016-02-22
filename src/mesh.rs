@@ -177,13 +177,27 @@ impl Mesh {
     ///  ^         | \   |
     ///  |         |   \ |
     ///  +-> x     c --- d
-    pub fn new_terrain() -> Mesh {
-        let size = 600.0;
-        let a = [-size,  size, 0.0];
-        let b = [ size,  size, 0.0];
-        let c = [-size, -size, 0.0];
-        let d = [ size, -size, 0.0];
-        Mesh::new().face(Face::new(a, c, d)).face(Face::new(a, b, d))
+    pub fn new_terrain(size: f64, res: f64) -> Mesh {
+        let mut mesh = Mesh::new();
+        let n_x = (size / res) as i32;
+        let n_z = (size / res) as i32;
+        for i in 0..n_x {
+            for j in 0..n_z {
+                let x = i as f64 * res - size/2.0;
+                let z = j as f64 * res - size/2.0;
+                let y1 = x.sin() * z.cos() * 100.0;
+                let y2 = (x+res).sin() * (z+res).cos() * 100.0;
+                mesh = mesh.face(Face::new(
+                    [x, y1, z],
+                    [x+res, y2, z],
+                    [x, y2, z+res]));
+                mesh = mesh.face(Face::new(
+                    [x+res, y2, z+res],
+                    [x+res, y2, z],
+                    [x, y1, z+res]));
+            }
+        }
+        mesh
     }
 
     ///  y         a --- b

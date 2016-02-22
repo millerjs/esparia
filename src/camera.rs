@@ -1,3 +1,5 @@
+use std::f64::NAN;
+
 use types::{
     Vec3,
     Mat3,
@@ -52,7 +54,11 @@ impl Camera {
         let scale = self.screen / d[2] / 1500.0;
         let bx = scale * d[0] * self.width + self.width  / 2.0;
         let by = scale * d[1] * self.height + self.height / 2.0;
-        [bx, by]
+        if d[2] < 0.0 {
+            [NAN, NAN]
+        } else {
+            [bx, by]
+        }
     }
 
     pub fn look_at(&mut self, r: Vec3) {

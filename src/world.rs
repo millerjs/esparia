@@ -119,6 +119,7 @@ impl World {
 
     fn update(&mut self, args: &UpdateArgs) {
         self.t += args.dt;
+        self.objects[1].meshes[0].translate([self.t.cos()*10.0, 0.0, self.t.sin()*10.0])
     }
 
     fn move_diamond(&mut self, key: &String) {
@@ -138,6 +139,25 @@ impl World {
 
     }
 
+    fn move_camera(&mut self, key: &String) {
+        let d = 10.0;
+        let r = match key.as_str() {
+            "a" => [ -d, 0.0, 0.0],
+            "d" => [  d, 0.0, 0.0],
+            "s" => [0.0, 0.0,  -d],
+            "w" => [0.0, 0.0,   d],
+            "2" => [0.0, d,  0.0],
+            "x" => [0.0, -d, 0.0],
+            _ => [0.0; 3]
+        };
+        self.camera.r = vecmath::vec3_add(self.camera.r, r);
+    }
+
+    fn turn_camera(&mut self, pos: [f64; 2]) {
+        self.camera.theta[1] = (pos[0]-self.camera.width/2.0) / self.camera.width*6.0;
+        self.camera.theta[0] = -(pos[1]-self.camera.height/2.0) /  self.camera.height*2.0;
+    }
+
     pub fn run(mut self) {
         println!("Running world...");
 
@@ -152,12 +172,12 @@ impl World {
                 self.update(&u);
             }
 
-            // if let Some(c) = e.mouse_cursor_args() {
-            //     self.turn_camera(&c);
-            // }
+            if let Some(c) = e.mouse_cursor_args() {
+                self.turn_camera(c);
+            }
 
             else if let Some(c) = e.text_args() {
-                self.move_diamond(&c);
+                self.move_camera(&c);
             }
 
             // else {
