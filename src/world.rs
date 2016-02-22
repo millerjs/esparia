@@ -36,7 +36,7 @@ use mesh::{ Mesh, Face };
 
 #[derive(Debug)]
 pub struct WorldObject {
-    pub meshes: Vec<Mesh>,
+    pub meshes: Vec<Box<Mesh>>,
     pub r: Vec3,
 }
 
@@ -46,7 +46,7 @@ impl WorldObject {
     }
 
     pub fn mesh(mut self, mesh: Mesh) -> WorldObject {
-        self.meshes.push(mesh);
+        self.meshes.push(Box::new(mesh));
         self
     }
 

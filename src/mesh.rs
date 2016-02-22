@@ -46,6 +46,7 @@ pub struct Face {
     color: [f32; 4],
 }
 
+
 impl Face {
     pub fn new(a: Vec3, b: Vec3, c: Vec3) -> Face {
         Face { points: [a, b, c], color: [0.5; 4] }
@@ -90,6 +91,7 @@ impl Face {
         ]
     }
 }
+
 
 // ======================================================================
 // Mesh
