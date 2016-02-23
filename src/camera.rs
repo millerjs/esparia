@@ -1,3 +1,4 @@
+
 use std::f64::NAN;
 
 use types::{
@@ -73,8 +74,8 @@ impl Camera {
         self.theta = vec3_add(self.theta, theta)
     }
 
-    pub fn trans(&mut self, r: Vec3) {
-        vec3_add(r, self.r);
+    pub fn translate(&mut self, r: Vec3) {
+        self.r = vec3_add(r, self.r);
     }
 
     pub fn put(&mut self, r: Vec3) {

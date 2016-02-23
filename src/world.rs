@@ -1,3 +1,4 @@
+
 use std::ops::{ Add, Mul, Neg, Sub, Div };
 
 pub use float::{
@@ -29,7 +30,6 @@ use opengl_graphics::{
 
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
-use camera;
 use camera::Camera;
 use mesh::{ Mesh, Face };
 
@@ -123,10 +123,6 @@ impl World {
     }
 
     fn move_diamond(&mut self, key: &String) {
-        // let s = 6.26573;
-        // println!("{:?}", args);
-        // let (w, h) = (self.camera.width, self.camera.height);
-
         let d = 10.0;
         let r = match key.as_str() {
             "a" => [ -d, 0.0, 0.0],
@@ -141,6 +137,7 @@ impl World {
 
     fn move_camera(&mut self, key: &String) {
         let d = 10.0;
+        println!("{:}", key);
         let r = match key.as_str() {
             "a" => [ -d, 0.0, 0.0],
             "d" => [  d, 0.0, 0.0],
@@ -150,7 +147,7 @@ impl World {
             "x" => [0.0, -d, 0.0],
             _ => [0.0; 3]
         };
-        self.camera.r = vecmath::vec3_add(self.camera.r, r);
+        self.camera.translate(r);
     }
 
     fn turn_camera(&mut self, pos: [f64; 2]) {
@@ -179,10 +176,6 @@ impl World {
             else if let Some(c) = e.text_args() {
                 self.move_camera(&c);
             }
-
-            // else {
-            //     println!("{:?}", e);
-            // }
         }
     }
 
