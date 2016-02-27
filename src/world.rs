@@ -1,4 +1,5 @@
 
+
 use std::ops::{ Add, Mul, Neg, Sub, Div };
 
 pub use float::{
@@ -31,12 +32,12 @@ use opengl_graphics::{
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
 use camera::Camera;
-use mesh::{ Mesh, Face };
+use mesh::{ Mesh };
 
 
 #[derive(Debug)]
 pub struct WorldObject {
-    pub meshes: Vec<Box<Mesh>>,
+    pub meshes: Vec<Mesh>,
     pub r: Vec3,
 }
 
@@ -46,7 +47,7 @@ impl WorldObject {
     }
 
     pub fn mesh(mut self, mesh: Mesh) -> WorldObject {
-        self.meshes.push(Box::new(mesh));
+        self.meshes.push(mesh);
         self
     }
 
@@ -137,14 +138,13 @@ impl World {
 
     fn move_camera(&mut self, key: &String) {
         let d = 10.0;
-        println!("{:}", key);
         let r = match key.as_str() {
             "a" => [ -d, 0.0, 0.0],
             "d" => [  d, 0.0, 0.0],
             "s" => [0.0, 0.0,  -d],
             "w" => [0.0, 0.0,   d],
-            "2" => [0.0, d,  0.0],
-            "x" => [0.0, -d, 0.0],
+            "x" => [0.0, d,  0.0],
+            "2" => [0.0, -d, 0.0],
             _ => [0.0; 3]
         };
         self.camera.translate(r);
