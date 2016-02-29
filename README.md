@@ -18,7 +18,7 @@ $ cargo build
 $ cargo run
 ```
 
-![Current appearance]()
+![Current appearance](https://raw.githubusercontent.com/millerjs/esparia/master/resources/screen1.png)
 
 ## Contributing
 
