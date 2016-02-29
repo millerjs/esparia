@@ -2,6 +2,7 @@
 
 
 
+
 #![crate_name = "esparia"]
 
 #[macro_use]
@@ -22,3 +23,4 @@ mod types;
 mod camera;
 mod math;
 mod mesh;
+mod lights;

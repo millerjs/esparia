@@ -1,5 +1,6 @@
-
 use vecmath;
+
+pub type Color = [f32; 4];
 
 /// Alias the 2D vector type
 pub type Vec2 = vecmath::Vector2<f64>;

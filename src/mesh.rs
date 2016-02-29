@@ -1,3 +1,4 @@
+
 use std;
 
 pub use float::{
@@ -8,6 +9,9 @@ pub use float::{
 use vecmath::{
     vec3_add,
     vec3_sub,
+    vec3_cross,
+    vec3_dot,
+    vec3_normalized,
 };
 
 use math::{
@@ -17,6 +21,7 @@ use math::{
 };
 
 use types::{
+    Color,
     Vec3,
 };
 
@@ -40,19 +45,19 @@ use camera::Camera;
 // Faces
 
 /// A 3D Face
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Face {
     vertices: [usize; 3],
-    color: [f32; 4],
+    color: Color,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Vertex {
     r: Vec3,
     faces: Vec<usize>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Mesh {
     vertices: Vec<Vertex>,
     faces: Vec<Face>,
@@ -62,8 +67,25 @@ pub struct Mesh {
 }
 
 
+// ======================================================================
+// Light
+
+pub struct Light {
+    r: Vec3,
+    intensity: f32,
+}
+
+impl Light {
+    fn new(r: Vec3, intensity: f32) -> Light {
+        Light { r: r, intensity: intensity }
+    }
+}
+
+// ======================================================================
+// Face
+
 impl Face {
-    pub fn color(mut self, color: [f32; 4]) -> Face {
+    pub fn color(mut self, color: Color) -> Face {
         self.color = color;
         self
     }
@@ -88,6 +110,26 @@ impl Face {
             [p[2][0], p[2][1], p[0][0], p[0][1]],
         ]
     }
+
+    pub fn normal(&self, mesh: &Mesh) -> Vec3 {
+        vec3_normalized(vec3_cross(
+            mesh.vertices[self.vertices[1]].r,
+            mesh.vertices[self.vertices[2]].r
+        ))
+    }
+
+    pub fn shade(&self, mesh: &Mesh) -> Color {
+        let norm = self.normal(mesh);
+        let dot = vec3_dot(norm, [1.0, 1.0, 0.0]).abs();
+        let shade = (1.0 - dot * 0.4) as f32;
+        [
+            self.color[0] * shade,
+            self.color[1] * shade,
+            self.color[2] * shade,
+            self.color[3],
+        ]
+    }
+
 }
 
 // ======================================================================
@@ -118,15 +160,27 @@ impl Mesh {
         self.vertices.len() - 1
     }
 
-    pub fn add_face(&mut self, t: Face) {
-        self.faces.push(t)
+    pub fn add_face(&mut self, face: Face) {
+        self.faces.push(face.clone());
+        let idx = self.faces.len() - 1;
+        for vertex in &face.vertices {
+            self.vertices[*vertex].faces.push(idx)
+        }
     }
 
     pub fn translate(&mut self, r: Vec3) {
-
+        self.r = vec3_add(r, self.r);
+        for vertex in self.vertices.iter_mut() {
+            vertex.r = vec3_add(r, vertex.r);
+        }
     }
 
     pub fn rotate(&mut self, theta: Vec3) {
+        self.theta = vec3_add(self.theta, theta);
+        let rotation = mat_rotation(theta);
+        for vertex in self.vertices.iter_mut() {
+            vertex.r = vec3_rotate_around(vertex.r, rotation, self.r);
+        }
     }
 
     pub fn wireframe(mut self, wireframe: bool) -> Mesh {
@@ -148,14 +202,13 @@ impl Mesh {
         where G: Graphics
     {
         for face in self.faces.iter() {
-            Polygon::new(face.color)
+            Polygon::new(face.shade(self))
                 .draw(&face.project(self, camera),
                       default_draw_state(),
                       transform,
                       g);
         }
     }
-
 
     pub fn draw_wireframe<G>(&self, camera: &Camera, transform: Matrix2d, g: &mut G)
         where G: Graphics
@@ -175,11 +228,27 @@ impl Mesh {
 
     pub fn new_terrain(size: f64, res: f64) -> Mesh {
         let mut mesh = Mesh::new();
+        let n = (size / res) as usize;
+        for j in 0..n {
+            for i in 0..n {
+                let x = i as f64 * res - size / 2.0;
+                let z = j as f64 * res - size / 2.0;
+                let y = ((x/100.0).sin() + (z/100.0).cos())*100.0;
+                mesh.add_vertex([x,  y,  z]);
+            }
+        }
+        let color = [0.0, 0.25, 0., 1.0];
+        for i in 0..n-1 {
+            for j in 0..n-1 {
+                let a = j * n + i;
+                let b = j * n + i + 1;
+                let c = (j + 1) * n + i;
+                let d = (j + 1) * n + i + 1;
+                mesh.add_face(Face::new(a, b, c).color(color));
+                mesh.add_face(Face::new(d, b, c).color(color));
+            }
+        }
         mesh
-    }
-
-    pub fn new_domain() -> Mesh {
-        Mesh::new()
     }
 
     pub fn new_diamond(size: f64) -> Mesh {
@@ -188,16 +257,17 @@ impl Mesh {
         let b = mesh.add_vertex([  0.0,  0.0,  size]);
         let c = mesh.add_vertex([ size,  0.0,  0.0]);
         let d = mesh.add_vertex([  0.0,  0.0, -size]);
-        let e = mesh.add_vertex([  0.0,  size, 0.0]);
-        let f = mesh.add_vertex([  0.0, -size, 0.0]);
-        mesh.add_face(Face::new(a, e, b));
-        mesh.add_face(Face::new(b, e, c));
-        mesh.add_face(Face::new(c, e, d));
-        mesh.add_face(Face::new(d, e, a));
-        mesh.add_face(Face::new(a, f, b));
-        mesh.add_face(Face::new(b, f, c));
-        mesh.add_face(Face::new(c, f, d));
-        mesh.add_face(Face::new(d, f, a));
+        let e = mesh.add_vertex([  0.0,  size*2.0, 0.0]);
+        let f = mesh.add_vertex([  0.0, -size*2.0, 0.0]);
+        let color = [0.1, 0.1, 0.9, 0.4];
+        mesh.add_face(Face::new(a, e, b).color(color));
+        mesh.add_face(Face::new(b, e, c).color(color));
+        mesh.add_face(Face::new(c, e, d).color(color));
+        mesh.add_face(Face::new(d, e, a).color(color));
+        mesh.add_face(Face::new(a, f, b).color(color));
+        mesh.add_face(Face::new(b, f, c).color(color));
+        mesh.add_face(Face::new(c, f, d).color(color));
+        mesh.add_face(Face::new(d, f, a).color(color));
         mesh
     }
 

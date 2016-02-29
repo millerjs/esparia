@@ -1,5 +1,3 @@
-
-
 use std::ops::{ Add, Mul, Neg, Sub, Div };
 
 pub use float::{
@@ -8,6 +6,11 @@ pub use float::{
 };
 
 use vecmath;
+
+use math::{
+    mat3xv3_mul,
+    mat_rotation,
+};
 
 use types::{
     Vec3,
@@ -32,8 +35,8 @@ use opengl_graphics::{
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
 use camera::Camera;
-use mesh::{ Mesh };
-
+use mesh::Mesh;
+use lights::LightSource;
 
 #[derive(Debug)]
 pub struct WorldObject {
@@ -67,6 +70,7 @@ pub struct World {
     pub window: Window,
     pub t: f64,
     pub camera: Camera,
+    pub lights: Vec<LightSource>,
 }
 
 
@@ -81,12 +85,15 @@ impl World {
             .build()
             .unwrap();
 
+        let light = LightSource::new([200.0, 100.0, 0.0]);
+
         World {
             gl: GlGraphics::new(opengl),
             objects: vec![],
             t: 0.0,
             window: window,
             camera: Camera::default(),
+            lights: vec![light],
         }
 
     }
@@ -120,7 +127,7 @@ impl World {
 
     fn update(&mut self, args: &UpdateArgs) {
         self.t += args.dt;
-        self.objects[1].meshes[0].translate([self.t.cos()*10.0, 0.0, self.t.sin()*10.0])
+        self.objects[1].meshes[0].translate([self.t.cos(), 0.0, self.t.sin()])
     }
 
     fn move_diamond(&mut self, key: &String) {
