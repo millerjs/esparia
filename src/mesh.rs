@@ -1,3 +1,4 @@
+use rand;
 
 use std;
 
@@ -40,6 +41,7 @@ use graphics::{
 };
 
 use camera::Camera;
+use lights::LightSource;
 
 // ======================================================================
 // Faces
@@ -118,9 +120,9 @@ impl Face {
         ))
     }
 
-    pub fn shade(&self, mesh: &Mesh) -> Color {
+    pub fn shade(&self, mesh: &Mesh, lights: &Vec<LightSource>) -> Color {
         let norm = self.normal(mesh);
-        let dot = vec3_dot(norm, [1.0, 1.0, 0.0]).abs();
+        let dot = vec3_dot(norm, vec3_normalized(lights[0].r)).abs();
         let shade = (1.0 - dot * 0.4) as f32;
         [
             self.color[0] * shade,
@@ -129,7 +131,6 @@ impl Face {
             self.color[3],
         ]
     }
-
 }
 
 // ======================================================================
@@ -188,21 +189,31 @@ impl Mesh {
         self
     }
 
-    pub fn draw<G>(&self, camera: &Camera, transform: Matrix2d, g: &mut G)
-        where G: Graphics
+    pub fn draw<G>(
+        &self,
+        camera: &Camera,
+        lights: &Vec<LightSource>,
+        transform: Matrix2d,
+        g: &mut G
+    ) where G: Graphics
     {
         match self.wireframe {
-            true => self.draw_wireframe(camera, transform, g),
-            false => self.draw_filled(camera, transform, g),
+            true => self.draw_wireframe(camera, lights, transform, g),
+            false => self.draw_filled(camera, lights, transform, g),
         }
     }
 
 
-    pub fn draw_filled<G>(&self, camera: &Camera, transform: Matrix2d, g: &mut G)
-        where G: Graphics
+    pub fn draw_filled<G>(
+        &self,
+        camera: &Camera,
+        lights: &Vec<LightSource>,
+        transform: Matrix2d,
+        g: &mut G
+    ) where G: Graphics
     {
         for face in self.faces.iter() {
-            Polygon::new(face.shade(self))
+            Polygon::new(face.shade(self, lights))
                 .draw(&face.project(self, camera),
                       default_draw_state(),
                       transform,
@@ -210,8 +221,13 @@ impl Mesh {
         }
     }
 
-    pub fn draw_wireframe<G>(&self, camera: &Camera, transform: Matrix2d, g: &mut G)
-        where G: Graphics
+    pub fn draw_wireframe<G>(
+        &self,
+        camera: &Camera,
+        lights: &Vec<LightSource>,
+        transform: Matrix2d,
+        g: &mut G
+    ) where G: Graphics
     {
         let ds = default_draw_state();
         for face in self.faces.iter() {
@@ -220,6 +236,7 @@ impl Mesh {
             }
         }
     }
+
 
     pub fn position(mut self, r: Vec3) -> Mesh {
         self.r = r;
@@ -250,6 +267,7 @@ impl Mesh {
         }
         mesh
     }
+
 
     pub fn new_diamond(size: f64) -> Mesh {
         let mut mesh = Mesh::new();

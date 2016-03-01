@@ -3,6 +3,7 @@
 
 
 
+
 #![crate_name = "esparia"]
 
 #[macro_use]
@@ -14,7 +15,7 @@ extern crate piston;
 extern crate graphics;
 extern crate glutin_window;
 extern crate opengl_graphics;
-extern crate cam;
+extern crate rand;
 
 pub mod app;
 

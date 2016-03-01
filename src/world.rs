@@ -54,13 +54,19 @@ impl WorldObject {
         self
     }
 
-    pub fn draw<G>(&self, camera: &Camera, transform: Matrix2d, g: &mut G)
-        where G: Graphics
+    pub fn draw<G>(
+        &self,
+        camera: &Camera,
+        lights: &Vec<LightSource>,
+        transform: Matrix2d,
+        g: &mut G
+    ) where G: Graphics
     {
         for mesh in &self.meshes {
-            mesh.draw(camera, transform, g)
+            mesh.draw(camera, lights, transform, g)
         }
     }
+
 }
 
 
@@ -108,21 +114,20 @@ impl World {
         use graphics::Transformed;
 
         let objects = &self.objects;
+        let lights = &self.lights;
         let camera = &mut self.camera;
 
         camera.width = args.width as f64;
         camera.height = args.height as f64;
-
         camera.update_projection();
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
-
             for object in objects {
-                object.draw(camera, c.transform, gl);
+                object.draw(camera, lights, c.transform, gl);
             }
-
         });
+
     }
 
     fn update(&mut self, args: &UpdateArgs) {
