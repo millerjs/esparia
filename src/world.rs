@@ -1,42 +1,23 @@
-use std::ops::{ Add, Mul, Neg, Sub, Div };
-
-pub use float::{
-    One,
-    Zero,
-};
-
-use vecmath;
-
-use math::{
-    mat3xv3_mul,
-    mat_rotation,
-};
-
-use types::{
-    Vec3,
-};
-
+pub use float::One;
+pub use float::Zero;
+use camera::Camera;
+use glutin_window::GlutinWindow as Window;
 use graphics::Graphics;
-
-use graphics::math::{
-    Matrix2d,
-};
-
-use piston::window::WindowSettings;
+use graphics::math::Matrix2d;
+use lights::LightSource;
+use math::mat3xv3_mul;
+use math::mat_rotation;
+use mesh::Mesh;
+use opengl_graphics::GlGraphics;
+use opengl_graphics::OpenGL;
 use piston::event_loop::*;
 use piston::input::*;
-use glutin_window::GlutinWindow as Window;
-
-use opengl_graphics::{
-    GlGraphics,
-    OpenGL,
-};
+use piston::window::WindowSettings;
+use std::ops::{ Add, Mul, Neg, Sub, Div };
+use types::Vec3;
+use vecmath;
 
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-
-use camera::Camera;
-use mesh::Mesh;
-use lights::LightSource;
 
 #[derive(Debug)]
 pub struct WorldObject {
@@ -53,20 +34,6 @@ impl WorldObject {
         self.meshes.push(mesh);
         self
     }
-
-    pub fn draw<G>(
-        &self,
-        camera: &Camera,
-        lights: &Vec<LightSource>,
-        transform: Matrix2d,
-        g: &mut G
-    ) where G: Graphics
-    {
-        for mesh in &self.meshes {
-            mesh.draw(camera, lights, transform, g)
-        }
-    }
-
 }
 
 
@@ -123,10 +90,8 @@ impl World {
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
-            for object in objects {
-                object.draw(camera, lights, c.transform, gl);
-            }
         });
+
 
     }
 

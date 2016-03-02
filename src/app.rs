@@ -1,7 +1,6 @@
-
-
-use world::{ WorldObject, World };
-use mesh::{ Mesh };
+use mesh::Mesh;
+use world::WorldObject;
+use world::World;
 
 pub struct Game {
     world: World,
@@ -9,8 +8,13 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Game {
-        let terrain = Mesh::new_terrain(600.0, 20.0).wireframe(false);
-        let diamond = Mesh::new_diamond(15.0).wireframe(false);
+        let mut terrain = Mesh::new();
+        terrain.wireframe(false);
+        terrain.add_terrain(6000.0, 20.0);
+
+        let mut diamond = Mesh::new_diamond(15.0);
+        diamond.wireframe(false);
+
         let world = World::new()
             .object(WorldObject::new().mesh(terrain))
             .object(WorldObject::new().mesh(diamond));
