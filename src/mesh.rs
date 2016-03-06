@@ -4,21 +4,19 @@ use graphics::default_draw_state;
 use graphics::math::Matrix2d;
 use graphics;
 use lights::LightSource;
-use math::mat3xv3_mul;
 use math::mat_rotation;
 use math::vec3_rotate_around;
-use rand;
-use std;
 use std::cell::RefCell;
 use std::rc::Rc;
 use types::Color;
 use types::Vec3;
 use vecmath::vec3_add;
+use vecmath::vec3_sub;
 use vecmath::vec3_cross;
 use vecmath::vec3_dot;
 use vecmath::vec3_normalized;
 use vecmath::vec3_square_len;
-use vecmath::vec3_sub;
+use vecmath::vec3_scale;
 
 pub use float::One;
 pub use float::Zero;
@@ -26,10 +24,10 @@ pub use float::Zero;
 /// A 3D mesh
 #[derive(Debug,Clone)]
 pub struct Mesh {
-    mesh: Rc<MeshContents>,
-    r: Vec3,
-    wireframe: bool,
-    theta: Vec3,
+    pub mesh: Rc<MeshContents>,
+    pub r: Vec3,
+    pub wireframe: bool,
+    pub theta: Vec3,
 }
 
 /// Contents of a 3D mesh
@@ -88,6 +86,13 @@ impl Face {
         self
     }
 
+    pub fn distance(&self, r: Vec3) -> f64 {
+        let p = self.get_points();
+        let total = vec3_add(p[0], vec3_add(p[1], p[2]));
+        let ave = vec3_scale(total, 1.0/3.0);
+        vec3_square_len(vec3_sub(ave, r)).powf(0.5)
+    }
+
     pub fn project(&self, camera: &Camera) -> graphics::types::Triangle {
         let points = self.get_points();
         [
@@ -106,7 +111,7 @@ impl Face {
         ]
     }
 
-    fn get_points(&self) -> [Vec3; 3] {
+    pub fn get_points(&self) -> [Vec3; 3] {
         [
             self.mesh.vertices.borrow()[self.vertices[0]].r,
             self.mesh.vertices.borrow()[self.vertices[1]].r,
@@ -130,6 +135,37 @@ impl Face {
             self.color[3],
         ]
     }
+
+    pub fn draw_filled<G>(
+        &self,
+        camera: &Camera,
+        lights: &Vec<LightSource>,
+        transform: Matrix2d,
+        g: &mut G
+    ) where G: Graphics
+    {
+        graphics::Polygon::new(self.shade(lights))
+            .draw(&self.project(camera),
+                  default_draw_state(),
+                  transform,
+                  g)
+    }
+
+    pub fn draw_wireframe<G>(
+        &self,
+        camera: &Camera,
+        lights: &Vec<LightSource>,
+        transform: Matrix2d,
+        g: &mut G
+    ) where G: Graphics
+    {
+        let ds = default_draw_state();
+        for line in &self.project_lines(camera) {
+            graphics::Line::new(self.color, 0.5)
+                .draw(*line, ds, transform, g)
+        }
+    }
+
 }
 
 // ======================================================================
@@ -183,54 +219,6 @@ impl Mesh {
         self.wireframe = wireframe;
     }
 
-    pub fn draw<G>(
-        &self,
-        camera: &Camera,
-        lights: &Vec<LightSource>,
-        transform: Matrix2d,
-        g: &mut G
-    ) where G: Graphics
-    {
-        match self.wireframe {
-            true => self.draw_wireframe(camera, lights, transform, g),
-            false => self.draw_filled(camera, lights, transform, g),
-        }
-    }
-
-    pub fn draw_filled<G>(
-        &self,
-        camera: &Camera,
-        lights: &Vec<LightSource>,
-        transform: Matrix2d,
-        g: &mut G
-    ) where G: Graphics
-    {
-        for face in self.mesh.faces.borrow().iter() {
-            graphics::Polygon::new(face.shade(lights))
-                .draw(&face.project(camera),
-                      default_draw_state(),
-                      transform,
-                      g);
-        }
-    }
-
-    pub fn draw_wireframe<G>(
-        &self,
-        camera: &Camera,
-        lights: &Vec<LightSource>,
-        transform: Matrix2d,
-        g: &mut G
-    ) where G: Graphics
-    {
-        let ds = default_draw_state();
-        for face in self.mesh.faces.borrow().iter() {
-            for line in &face.project_lines(camera) {
-                graphics::Line::new(face.color, 0.5)
-                    .draw(*line, ds, transform, g)
-            }
-        }
-    }
-
     pub fn position(mut self, r: Vec3) -> Mesh {
         self.r = r;
         self
@@ -254,8 +242,10 @@ impl Mesh {
                 let b = j * n + i + 1;
                 let c = (j + 1) * n + i;
                 let d = (j + 1) * n + i + 1;
-                self.add_face(Face::new(self.mesh.clone(), a, b, c).color(color));
-                self.add_face(Face::new(self.mesh.clone(), d, b, c).color(color));
+                self.add_face(Face::new(self.mesh.clone(), a, b, c)
+                              .color(color));
+                self.add_face(Face::new(self.mesh.clone(), d, b, c)
+                              .color(color));
             }
         }
     }

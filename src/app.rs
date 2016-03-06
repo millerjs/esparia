@@ -1,3 +1,4 @@
+
 use mesh::Mesh;
 use world::WorldObject;
 use world::World;
@@ -10,7 +11,7 @@ impl Game {
     pub fn new() -> Game {
         let mut terrain = Mesh::new();
         terrain.wireframe(false);
-        terrain.add_terrain(6000.0, 20.0);
+        terrain.add_terrain(600.0, 20.0);
 
         let mut diamond = Mesh::new_diamond(15.0);
         diamond.wireframe(false);

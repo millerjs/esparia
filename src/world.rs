@@ -1,21 +1,21 @@
+//! Module managing a world of mesh and actor objects
+
+use std::cell::RefCell;
+
 pub use float::One;
 pub use float::Zero;
 use camera::Camera;
 use glutin_window::GlutinWindow as Window;
-use graphics::Graphics;
-use graphics::math::Matrix2d;
 use lights::LightSource;
-use math::mat3xv3_mul;
-use math::mat_rotation;
 use mesh::Mesh;
+use mesh::Face;
 use opengl_graphics::GlGraphics;
 use opengl_graphics::OpenGL;
 use piston::event_loop::*;
 use piston::input::*;
 use piston::window::WindowSettings;
-use std::ops::{ Add, Mul, Neg, Sub, Div };
+use std::cmp::Ordering;
 use types::Vec3;
-use vecmath;
 
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
@@ -44,6 +44,13 @@ pub struct World {
     pub t: f64,
     pub camera: Camera,
     pub lights: Vec<LightSource>,
+    pub triangles: RefCell<Vec<DepthTriangle>>,
+}
+
+
+pub struct DepthTriangle {
+    face: Face,
+    dist: f64,
 }
 
 
@@ -67,6 +74,7 @@ impl World {
             window: window,
             camera: Camera::default(),
             lights: vec![light],
+            triangles: RefCell::new(vec![]),
         }
 
     }
@@ -80,17 +88,81 @@ impl World {
         use graphics::clear;
         use graphics::Transformed;
 
-        let objects = &self.objects;
         let lights = &self.lights;
+        let objects = &self.objects;
         let camera = &mut self.camera;
+        let triangles = &mut self.triangles;
 
         camera.width = args.width as f64;
         camera.height = args.height as f64;
         camera.update_projection();
 
+
+        // let mut n_triangles = 0;
+        // Count all of the triangles in the whole world
+        // for object in &self.objects {
+        //     for mesh in object.meshes.iter() {
+        //         n_triangles += mesh.mesh.faces.borrow().len();
+        //     }
+        // }
+
+        // if triangles.borrow().len() != n_triangles {
+        // Get all of the triangles in the whole world
+        triangles.borrow_mut().clear();
+        for object in &self.objects {
+            for mesh in object.meshes.iter() {
+                for face in mesh.mesh.faces.borrow_mut().iter() {
+                    let d = face.distance(camera.r);
+                    triangles.borrow_mut().push(DepthTriangle {
+                        face: face.clone(),
+                        dist: d,
+                    });
+                    // println!("{:}", d);
+                }
+            }
+        }
+        // }
+
+        // Sort those triangles based on distance from the camera
+
+        triangles.borrow_mut().sort_by(
+            |a, b| a.dist.partial_cmp(&b.dist).unwrap_or(Ordering::Less)
+        );
+
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
+
+            // // Get all of the triangles in the whole world
+            // for object in objects.iter() {
+            //     for mesh in object.meshes.iter() {
+            //         for face in mesh.mesh.faces.borrow_mut().iter() {
+            //             if face.distance(camera.r) < 300.0 {
+            //                 face.draw_filled(
+            //                     camera,
+            //                     lights,
+            //                     c.transform,
+            //                     gl,
+            //                 )
+            //             }
+            //         }
+            //     }
+            // }
+            //
+
+            for triangle in triangles.borrow().iter() {
+                if triangle.dist < 600.0 {
+                    triangle.face.draw_filled(
+                        camera,
+                        lights,
+                        c.transform,
+                        gl,
+                    );
+                }
+            }
+
+
         });
+
 
 
     }
